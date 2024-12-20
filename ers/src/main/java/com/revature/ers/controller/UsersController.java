@@ -37,23 +37,31 @@ public class UsersController {
 
     @PostMapping(value = "/register")
     public ResponseEntity<Users> registerUser(@RequestBody Users users) {
-        if (userService.getUsersByUsername(users.getUsername()) == null) {
+        Users tempuser = userService.getUsersByUsername(users.getUsername());
+        if (tempuser != null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        } else {
             Users createdUser = userService.createUser(users);
             return ResponseEntity.ok(createdUser);
-        } else {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
     }
 
     @PostMapping(value = "/login")
     public ResponseEntity<Users> loginUser(@RequestBody Users users) {
-        Users tempUser = userService.getUsersByUsername(users.getUsername());
-        if (tempUser != null && tempUser.getPassword().equals(users.getPassword()) 
-            && tempUser.getUsername().equals(users.getUsername())) {
-                return ResponseEntity.ok(userService.getUsersByUsername(users.getUsername()));
-            } else {
-            return ResponseEntity.status(204).build();
-            }
+        if (users == null || users.getUsername() == null || users.getPassword() == null) {
+            return ResponseEntity.badRequest().build(); 
+        }
+        try{
+            Users tempUser = userService.getUsersByUsername(users.getUsername());
+            if (tempUser.getPassword().equals(users.getPassword()) 
+                && tempUser.getUsername().equals(users.getUsername())) {
+                    return ResponseEntity.ok(userService.getUsersByUsername(users.getUsername()));
+                } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @GetMapping(value ="/user")
